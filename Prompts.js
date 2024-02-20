@@ -14,12 +14,17 @@ limitations under the License.
 */
 
 var Prompts = new function(){
-	this.alert = function(msg){
+	this.alert = function(msg, btnText){
 		return new Promise(function(resolve,reject){
 			let newDiv = createBox(msg);
 			let newBtn = document.createElement("div");
 			newBtn.className = "promptButton";
-			newBtn.innerText = "OK";
+			if(btnText){
+				newBtn.innerText = btnText;
+			}
+			else{
+				newBtn.innerText = "OK";
+			}
 			newBtn.addEventListener("click", function(){closePrompt();resolve();}, false);
 			newDiv.appendChild(newBtn);
 			deployPrompt(newDiv);
@@ -47,18 +52,29 @@ var Prompts = new function(){
 		});
 	};
 	
+	/*
+	Displays an input field for the user to fill out
+	 - for a custom input, pass the input element as 'defaultvalue'
+	*/
 	this.prompt = function(msg, defaultvalue, placeholder){
 		return new Promise(function(resolve,reject){
-			let newDiv = createBox(msg);
-			let newInput = document.createElement("input");
-			newInput.type = "text";
+			let newInput, newDiv = createBox(msg);
+			//if the caller has provided the input
+			if(defaultvalue instanceof Element){
+				newInput = defaultvalue;
+			}
+			//build the input
+			else{
+				newInput = document.createElement("input");
+				newInput.type = "text";
+				if(defaultvalue){
+					newInput.value = defaultvalue;
+				}
+				if(placeholder){
+					newInput.placeholder = placeholder;
+				}
+			}
 			newInput.className = "promptInput";
-			if(defaultvalue){
-				newInput.value = defaultvalue;
-			}
-			if(placeholder){
-				newInput.placeholder = placeholder;
-			}
 			newDiv.appendChild(newInput);
 			let newBtn = document.createElement("div");
 			newBtn.className = "promptButton half";
@@ -169,7 +185,9 @@ var Prompts = new function(){
 				"max-width": "350px",
 				"background-color": "white",
 				padding: "15px",
+				"font-family": "arial",
 				"font-size": "14px",
+				color: "black",
 				border: "3px solid blue",
 				"box-shadow": "0px 0px 25px",
 				promptButton: {
