@@ -73,8 +73,8 @@ var Prompts = new function(){
 				if(placeholder){
 					newInput.placeholder = placeholder;
 				}
+				newInput.className = "promptInput";
 			}
-			newInput.className = "promptInput";
 			newDiv.appendChild(newInput);
 			let newBtn = document.createElement("div");
 			newBtn.className = "promptButton half";
@@ -83,8 +83,23 @@ var Prompts = new function(){
 				"click",
 				function(){
 					closePrompt();
-					let valueElm = newDiv.getElementsByClassName("promptInput")[0];
-					resolve(valueElm.value);
+					let valueElm = newDiv.getElementsByClassName("promptInput");
+					if(valueElm && valueElm.length){
+						if(valueElm.length == 1){
+							resolve(valueElm[0].value);
+						}
+						else{
+							//build return object
+							let i, obj = {};
+							for(i=0; i<valueElm.length; i++){
+								obj[valueElm[i].name] = valueElm[i].value;
+							}
+							resolve(obj);
+						}
+					}
+					else{
+						resolve(true);
+					}
 				},
 				false
 			);
@@ -147,7 +162,10 @@ var Prompts = new function(){
 	
 	//closes any open prompt prematurely, rejecting its promise
 	this.close = function(){
-		forceClose();
+		if(_currentPromiseReject){
+			_currentPromiseReject(new Error("Close prompt called"));
+		}
+		closePrompt();
 	};
 	
 	//if enabled, prompts are automatically closed when a new prompt is requested
@@ -184,19 +202,22 @@ var Prompts = new function(){
 				width: "90%",
 				"max-width": "350px",
 				"background-color": "white",
-				padding: "15px",
+				padding: "12px",
 				"font-family": "arial",
 				"font-size": "14px",
 				color: "black",
-				border: "3px solid blue",
-				"box-shadow": "0px 0px 25px",
+				"box-shadow": "0px 0px 15px blue",
+				"border-radius": "5px",
 				promptButton: {
 					margin: "10px",
 					padding: "5px",
-					border: "1px solid blue",
+					border: "2px solid blue",
 					"font-size": "18px",
-					"box-shadow": "0px 0px 10px black",
-					"border-radius": "4px"
+					"border-radius": "4px",
+					cursor: "pointer"
+				},
+				"promptButton:hover": {
+					"box-shadow": "0px 0px 10px gray",
 				},
 				promptInput: {
 					border: "1px solid #aaa",
@@ -249,7 +270,7 @@ var Prompts = new function(){
 			if(!_autoClose){
 				throw new Error("Prompt already open");
 			}
-			forceClose();
+			closePrompt();
 		}
 		let newShade = document.createElement("div");
 		newShade.className = "promptShade";
@@ -281,13 +302,6 @@ var Prompts = new function(){
 			clearTimeout(promptTimeout);
 			promptTimeout = null;
 		}
-	}
-	
-	function forceClose(){
-		if(_currentPromiseReject){
-			_currentPromiseReject(new Error("Close prompt called"));
-		}
-		closePrompt();
 	}
 	
 	function onPromptWaiting(){
