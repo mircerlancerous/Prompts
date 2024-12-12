@@ -261,7 +261,7 @@ var Prompts = new function(){
 	function createBox(msg){
 		let newDiv = document.createElement("div");
 		newDiv.className = "promptBox";
-		newDiv.innerText = msg + "\n\n";
+		newDiv.innerHTML = msg + "<br/><br/>";
 		return newDiv;
 	}
 	
