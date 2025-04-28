@@ -181,7 +181,7 @@ var Prompts = new function(){
 	var _style = {
 		promptShade: {
 			"z-index": 1000,
-			height: "100%",
+			height: "100vh",
 			width: "100%",
 			position: "fixed",
 			top: "0px",
@@ -192,10 +192,12 @@ var Prompts = new function(){
 		},
 		promptHolder: {
 			"z-index": 1001,
+			height: "100vh",
 			width: "100%",
 			position: "fixed",
-			top: "100px",
+			top: "0px",
 			left: "0px",
+			overflow: "auto",
 			"text-align": "center",
 			promptBox: {
 				display: "inline-block",
@@ -208,6 +210,8 @@ var Prompts = new function(){
 				color: "black",
 				"box-shadow": "0px 0px 15px blue",
 				"border-radius": "5px",
+				"margin-top": "100px",
+				"margin-bottom": "20px",
 				promptButton: {
 					margin: "10px",
 					padding: "5px",
