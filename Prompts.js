@@ -1,5 +1,5 @@
 /*
-Copyright 2023 OffTheBricks - https://github.com/mircerlancerous/Prompts
+Copyright 2025 OffTheBricks - https://github.com/mircerlancerous/Prompts
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -19,6 +19,7 @@ var Prompts = new function(){
 			let newDiv = createBox(msg);
 			let newBtn = document.createElement("div");
 			newBtn.className = "promptButton";
+			newBtn.tabIndex = 0;
 			if(btnText){
 				newBtn.innerText = btnText;
 			}
@@ -26,6 +27,7 @@ var Prompts = new function(){
 				newBtn.innerText = "OK";
 			}
 			newBtn.addEventListener("click", function(){closePrompt();resolve();}, false);
+			newBtn.addEventListener("keydown", function(e){if(e.keyCode == 13){closePrompt();resolve();}}, false);
 			newDiv.appendChild(newBtn);
 			deployPrompt(newDiv);
 			//needs to come after prompt is deployed
@@ -38,13 +40,17 @@ var Prompts = new function(){
 			let newDiv = createBox(msg);
 			let newBtn = document.createElement("div");
 			newBtn.className = "promptButton half";
+			newBtn.tabIndex = 0;
 			newBtn.innerText = "OK";
 			newBtn.addEventListener("click", function(){closePrompt();resolve(true);}, false);
+			newBtn.addEventListener("keydown", function(e){if(e.keyCode == 13){closePrompt();resolve(true);}}, false);
 			newDiv.appendChild(newBtn);
 			newBtn = document.createElement("div");
 			newBtn.className = "promptButton half";
+			newBtn.tabIndex = 0;
 			newBtn.innerText = "CANCEL";
 			newBtn.addEventListener("click", function(){closePrompt();resolve(false);}, false);
+			newBtn.addEventListener("keydown", function(e){if(e.keyCode == 13){closePrompt();resolve(false);}}, false);
 			newDiv.appendChild(newBtn);
 			deployPrompt(newDiv);
 			//needs to come after prompt is deployed
@@ -78,36 +84,37 @@ var Prompts = new function(){
 			newDiv.appendChild(newInput);
 			let newBtn = document.createElement("div");
 			newBtn.className = "promptButton half";
+			newBtn.tabIndex = 0;
 			newBtn.innerText = "OK";
-			newBtn.addEventListener(
-				"click",
-				function(){
-					closePrompt();
-					let valueElm = newDiv.getElementsByClassName("promptInput");
-					if(valueElm && valueElm.length){
-						if(valueElm.length == 1){
-							resolve(valueElm[0].value);
-						}
-						else{
-							//build return object
-							let i, obj = {};
-							for(i=0; i<valueElm.length; i++){
-								obj[valueElm[i].name] = valueElm[i].value;
-							}
-							resolve(obj);
-						}
+			let onOK = function(){
+				closePrompt();
+				let valueElm = newDiv.getElementsByClassName("promptInput");
+				if(valueElm && valueElm.length){
+					if(valueElm.length == 1){
+						resolve(valueElm[0].value);
 					}
 					else{
-						resolve(true);
+						//build return object
+						let i, obj = {};
+						for(i=0; i<valueElm.length; i++){
+							obj[valueElm[i].name] = valueElm[i].value;
+						}
+						resolve(obj);
 					}
-				},
-				false
-			);
+				}
+				else{
+					resolve(true);
+				}
+			};
+			newBtn.addEventListener("click",onOK,false);
+			newBtn.addEventListener("keydown",function(e){if(e.keyCode=13){onOK();}},false);
 			newDiv.appendChild(newBtn);
 			newBtn = document.createElement("div");
 			newBtn.className = "promptButton half";
+			newBtn.tabIndex = 0;
 			newBtn.innerText = "CANCEL";
 			newBtn.addEventListener("click", function(){closePrompt();resolve(false);}, false);
+			newBtn.addEventListener("keydown", function(e){if(e.keyCode == 13){closePrompt();resolve(false);}}, false);
 			newDiv.appendChild(newBtn);
 			deployPrompt(newDiv);
 			newInput.focus();
@@ -123,14 +130,25 @@ var Prompts = new function(){
 			return;
 		}
 		//have message, so show prompt with no buttons
-		let newDiv = createBox(msg);
-		let newWaiting = document.createElement("div");
-		newWaiting.className = "promptWaiting";
-		newWaiting.innerText = ".";
-		newDiv.appendChild(newWaiting);
-		deployPrompt(newDiv);
-		//start timer for waiting animation
-		promptTimer = setInterval(onPromptWaiting, 500);
+		let newWaiting, newDiv = createBox(msg);
+		//if waiting is already open, then update the message
+		if(promptTimer){
+			let msgBox = document.getElementsByClassName("promptBox")[0];
+			newWaiting = msgBox.getElementsByClassName("promptWaiting")[0];
+			newDiv.appendChild(newWaiting);
+			msgBox.parentNode.insertBefore(newDiv, msgBox);
+			msgBox.remove();
+			delete msgBox;
+		}
+		else{
+			newWaiting = document.createElement("div");
+			newWaiting.className = "promptWaiting";
+			newWaiting.innerText = ".";
+			newDiv.appendChild(newWaiting);
+			deployPrompt(newDiv);
+			//start timer for waiting animation
+			promptTimer = setInterval(onPromptWaiting, 500);
+		}
 	};
 	
 	this.timed = function(msg, ms){
@@ -223,6 +241,9 @@ var Prompts = new function(){
 				"promptButton:hover": {
 					"box-shadow": "0px 0px 10px gray",
 				},
+				"promptButton:focus": {
+					"background-color": "#eee",
+				},
 				promptInput: {
 					border: "1px solid #aaa",
 					padding: "3px;",
@@ -289,6 +310,17 @@ var Prompts = new function(){
 		newStyle.innerHTML = objToStyle(_style);
 		promptElms.push(newStyle);
 		document.body.appendChild(newStyle);
+		//check for an input or button to focus
+		let list = document.getElementsByClassName("promptInput");
+		if(list.length){
+			list[0].focus();
+		}
+		else{
+			list = document.getElementsByClassName("promptButton");
+			if(list.length){
+				list[0].focus();
+			}
+		}
 	}
 	
 	var promptElms = [], promptTimer = null, promptTimeout = null;
@@ -298,6 +330,10 @@ var Prompts = new function(){
 		}
 		promptElms = [];
 		_currentPromiseReject = null;
+		stopTimers();
+	}
+	
+	function stopTimers(){
 		if(promptTimer){
 			clearInterval(promptTimer);
 			promptTimer = null;
@@ -311,6 +347,10 @@ var Prompts = new function(){
 	function onPromptWaiting(){
 		let elm = document.getElementsByClassName("promptHolder")[0];
 		elm = elm.getElementsByClassName("promptWaiting")[0];
+		if(!elm){
+			stopTimers();
+			return;
+		}
 		if(elm.innerText.length > 20){
 			elm.innerText = ".";
 		}
